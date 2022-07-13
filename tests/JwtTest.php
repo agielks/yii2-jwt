@@ -5,7 +5,6 @@ namespace agielks\yii2\jwt\tests;
 use agielks\yii2\jwt\Jwt;
 use DateTimeImmutable;
 use Lcobucci\Clock\SystemClock;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Token;
 use Lcobucci\JWT\UnencryptedToken;
@@ -51,17 +50,9 @@ class JwtTest extends TestCase
     public function setUp(): void
     {
         $this->jwt = Yii::createObject(Jwt::class, [[
-            'signer' => $this->getSignerSha256(),
-            'key' => InMemory::plainText(self::SECRET),
+            'signer' => 'HS256',
+            'key' => self::SECRET,
         ]]);
-    }
-
-    /**
-     * @return Sha256 signer
-     */
-    public function getSignerSha256()
-    {
-        return new Sha256();
     }
 
     /**
@@ -95,6 +86,48 @@ class JwtTest extends TestCase
 
     }
 
+    /**
+     * Validate Algorithms
+     */
+    public function testAlgorithms() {
+        $algs = [
+            'HS256', 'HS384', 'HS512',
+            'ES256', 'ES384', 'ES512',
+            'RS256', 'RS384', 'RS512',
+            new \Lcobucci\JWT\Signer\Hmac\Sha256(), 
+        ];
+        
+        foreach ($algs as $alg)  {
+            $component = Yii::createObject(Jwt::class, [[
+                'signer' => $alg,
+                'key' => InMemory::plainText(self::SECRET),
+            ]]);    
+            
+            $this->assertTrue($component instanceof Jwt);
+        }
+    }
+    
+    /**
+     * Validate Keys
+     */
+    public function testKeys() {
+        $keys = [
+            self::SECRET,
+            InMemory::plainText(self::SECRET),
+            [self::SECRET, self::SECRET],
+        ];
+        
+        foreach ($keys as $key)  {
+            $component = Yii::createObject(Jwt::class, [[
+                'signer' => 'HS256',
+                'key' => $key,
+            ]]);    
+            
+            $this->assertTrue($component instanceof Jwt);
+        }
+    }
+    
+    
     /**
      * Validate IdentifiedBy
      */

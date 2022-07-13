@@ -80,7 +80,7 @@ class Jwt extends Component
     {
         parent::init();
         
-        if ($this->signer && $this->key) {
+        if ($this->signer() && $this->key()) {
             $this->config = Configuration::forSymmetricSigner(
                 $this->signer(),
                 $this->key(),
@@ -133,13 +133,18 @@ class Jwt extends Component
      * @param string $alg
      * @return Signer
      */
-    public function signer($alg = null): Signer
+    public function signer(): Signer
     {
         if ($this->signer instanceof Signer) {
             return $this->signer;
         }
      
-        $class = $this->supportedAlgs[$alg];
+        $class = $this->supportedAlgs[$this->signer] ?? $this->supportedAlgs['HS256'];
+        
+        if (in_array($this->signer, ['ES256', 'ES384', 'ES512'])) {
+            return $class::create();
+        }
+        
         return new $class();
     }
 
@@ -148,13 +153,20 @@ class Jwt extends Component
      * @param string|null $passphrase
      * @return Key
      */
-    public function key($content = null, $passphrase = null): Key
+    public function key(): Key
     {
         if ($this->key instanceof Key) {
             return $this->key;
         }
 
-        return InMemory::plainText($content, $passphrase);
+        if (is_array($this->key)) {
+            $contents = $this->key[0] ?? null;
+            $passphrase = $this->key[1] ?? '';
+            
+            return InMemory::plainText($contents, $passphrase);
+        }
+        
+        return InMemory::plainText($this->key);
     }
     
     /**
