@@ -245,7 +245,7 @@ public static function findIdentityByAccessToken($token, $type = null)
 
 If you want to use auth_key as key, update method as follows
 
-``php
+```php
 /**
  * {@inheritdoc}
  * @param \Lcobucci\JWT\Token $token
